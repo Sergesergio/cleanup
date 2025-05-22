@@ -1,24 +1,25 @@
 import 'package:flutter/material.dart';
 import '../../common/widgets/custom_navbar.dart';
-import '../../landlord/screens/landlord_home.dart';
-import '../../landlord/screens/landlord_profile.dart';
-import '../../landlord/screens/landlord_requests.dart';
+import '../screens/accepted_requests_screen.dart';
+import '../screens/available_requests_screen.dart';
+import '../screens/collector_home.dart';
+import '../screens/collector_profile.dart';
 
-
-class LandlordDashboard extends StatefulWidget {
-  const LandlordDashboard({super.key});
+class CollectorDashboard extends StatefulWidget {
+  const CollectorDashboard({super.key});
 
   @override
-  State<LandlordDashboard> createState() => _LandlordDashboardState();
+  State<CollectorDashboard> createState() => _CollectorDashboardState();
 }
 
-class _LandlordDashboardState extends State<LandlordDashboard> {
+class _CollectorDashboardState extends State<CollectorDashboard> {
   int _selectedIndex = 0;
 
-  final _screens = const [
-    LandlordHomeScreen(),
-    LandlordRequestsScreen(),
-    LandlordProfileScreen(),
+  final _screens = [
+    const CollectorHomeScreen(),
+    const AvailableRequestsScreen(),  // Add this file in your screens
+    const AcceptedRequestsScreen(),   // Add this file in your screens
+    CollectorProfileScreen(),
   ];
 
   void _onTabTapped(int index) {

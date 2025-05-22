@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../common/widgets/custom_navbar.dart';
+import '../screens/create_request.dart';
 import '../screens/landlord_home.dart';
 import '../screens/landlord_profile.dart';
-import '../screens/landlord_requests.dart';
-
+import '../screens/request_history_screen.dart'; // Request history
 
 class LandlordDashboard extends StatefulWidget {
   const LandlordDashboard({super.key});
@@ -15,9 +15,10 @@ class LandlordDashboard extends StatefulWidget {
 class _LandlordDashboardState extends State<LandlordDashboard> {
   int _selectedIndex = 0;
 
-  final _screens = const [
-    LandlordHomeScreen(),
-    LandlordRequestsScreen(),
+  final _screens = [
+    const LandlordHomeScreen(),
+    const CreateRequestScreen(),     // Add this file in your screens
+    const RequestHistoryScreen(),    // Add this file in your screens
     LandlordProfileScreen(),
   ];
 

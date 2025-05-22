@@ -20,18 +20,29 @@ class CustomNavBar extends StatelessWidget {
       currentIndex: currentIndex,
       onTap: onTap,
       backgroundColor: Colors.white,
+      type: BottomNavigationBarType.fixed, // Allows 4+ items
       selectedItemColor: Colors.green[800],
       unselectedItemColor: Colors.grey,
       items: isLandlord
           ? const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.list_alt), label: 'My Requests'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.home), label: 'Home'),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.add_box), label: 'New Request'),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.history), label: 'History'),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.person), label: 'Profile'),
       ]
           : const [
-        BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(icon: Icon(Icons.assignment), label: 'Jobs'),
-        BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Profile'),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.home), label: 'Home'),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.assignment), label: 'Available'),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.check_circle), label: 'Accepted'),
+        BottomNavigationBarItem(
+            icon: Icon(Icons.person), label: 'Profile'),
       ],
     );
   }

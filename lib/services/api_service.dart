@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  static const String _baseUrl = "http://<YOUR_BACKEND_URL>/api";
+  static const String _baseUrl = "http://10.0.2.2:5000/api";
 
   /// Submit a garbage pickup request (Landlord)
   static Future<bool> submitPickupRequest({
@@ -139,4 +139,57 @@ class ApiService {
       throw Exception("Failed to load accepted requests");
     }
   }
+  //user registration
+  static Future<bool> registerUser({
+    required String name,
+    required String email,
+    required String password,
+    required String role,
+  }) async {
+    final url = Uri.parse("$_baseUrl/auth/register");
+
+    final response = await http.post(
+      url,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        "name": name,
+        "email": email,
+        "password": password,
+        "role": role.toLowerCase(), // either "landlord" or "collector"
+      }),
+    );
+
+    return response.statusCode == 201;
+  }
+
+//user login
+  static Future<Map<String, dynamic>?> loginUser({
+    required String email,
+    required String password,
+  }) async {
+    final url = Uri.parse("$_baseUrl/auth/login");
+
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        "email": email,
+        "password": password,
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      final body = jsonDecode(response.body);
+      return {
+        'token': body['token'],
+        'role': body['role'],
+      };
+    } else {
+      return null;
+    }
+  }
+
+
 }
