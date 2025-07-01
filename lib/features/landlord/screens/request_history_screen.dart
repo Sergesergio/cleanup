@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../services/api_service.dart';
 
 class RequestHistoryScreen extends StatefulWidget {
@@ -10,7 +9,7 @@ class RequestHistoryScreen extends StatefulWidget {
 }
 
 class _RequestHistoryScreenState extends State<RequestHistoryScreen> {
-  final _storage = const FlutterSecureStorage();
+  // final _storage = const FlutterSecureStorage(); // Removed
   List<Map<String, dynamic>> _requests = [];
   bool _isLoading = true;
 
@@ -21,18 +20,24 @@ class _RequestHistoryScreenState extends State<RequestHistoryScreen> {
   }
 
   Future<void> _fetchRequests() async {
-    final token = await _storage.read(key: "token");
-    if (token != null) {
-      try {
-        final data = await ApiService.getMyRequests(token);
-        setState(() {
-          _requests = data;
-          _isLoading = false;
-        });
-      } catch (e) {
-        print('Error fetching requests: $e');
-        setState(() => _isLoading = false);
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      // ApiService now internally gets the token, no need to pass it
+      final data = await ApiService.getMyRequests(); // No token passed
+      setState(() {
+        _requests = data;
+        _isLoading = false;
+      });
+    } catch (e) {
+      print('Error fetching requests history: $e');
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load request history: ${e.toString()}')),
+        );
       }
+      setState(() => _isLoading = false);
     }
   }
 
@@ -40,24 +45,43 @@ class _RequestHistoryScreenState extends State<RequestHistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("My Pickup Requests"),
+        title: const Text("My Pickup Requests"),
       ),
       body: _isLoading
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : _requests.isEmpty
-          ? Center(child: Text("No requests yet"))
+          ? Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(Icons.info_outline, color: Colors.blueGrey, size: 50),
+            const SizedBox(height: 10),
+            const Text("No requests yet.", textAlign: TextAlign.center,),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _fetchRequests,
+              child: const Text("Refresh"),
+            ),
+          ],
+        ),
+      )
           : ListView.builder(
         itemCount: _requests.length,
         itemBuilder: (context, index) {
           final request = _requests[index];
+          // Provide default values in case keys are missing
+          final String location = request["location"] ?? "Unknown location";
+          final String description = request["description"] ?? "No description";
+          final String pickupDate = request["date"] != null
+              ? (request["date"] as String).substring(0, 10)
+              : "N/A"; // Assuming 'date' not 'pickupDate' based on other files
+
           return Card(
-            margin: EdgeInsets.all(12),
+            margin: const EdgeInsets.all(12),
             child: ListTile(
-              leading: Icon(Icons.location_on, color: Colors.green),
-              title: Text(request["location"] ?? "Unknown location"),
-              subtitle: Text(
-                "${request["description"] ?? ""}\n📅 ${request["pickupDate"]?.substring(0, 10) ?? ""}",
-              ),
+              leading: const Icon(Icons.location_on, color: Colors.green),
+              title: Text(location),
+              subtitle: Text("$description\n📅 $pickupDate"),
               trailing: _buildStatusBadge(request["status"]),
             ),
           );
@@ -80,14 +104,14 @@ class _RequestHistoryScreenState extends State<RequestHistoryScreen> {
     }
 
     return Container(
-      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: badgeColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Text(
         status ?? "Pending",
-        style: TextStyle(color: Colors.white),
+        style: const TextStyle(color: Colors.white),
       ),
     );
   }

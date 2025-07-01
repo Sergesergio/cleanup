@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
-import 'features/auth/role_selector.dart';
-import 'core/theme.dart';
+import 'package:cleanup/features/auth/role_selector.dart';
+import 'package:cleanup/core/theme.dart';
+import 'package:cleanup/services/api_service.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await ApiService.initializeBaseUrl();
   runApp(const CleanWasteApp());
 }
 
@@ -25,7 +28,7 @@ class LandingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Here you can check if user is logged in (simulate for now)
+
     return const RoleSelectorScreen(); // Default starting screen
   }
 }

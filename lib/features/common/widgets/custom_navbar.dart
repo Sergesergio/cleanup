@@ -27,8 +27,8 @@ class CustomNavBar extends StatelessWidget {
           ? const [
         BottomNavigationBarItem(
             icon: Icon(Icons.home), label: 'Home'),
-        BottomNavigationBarItem(
-            icon: Icon(Icons.add_box), label: 'New Request'),
+        // BottomNavigationBarItem(
+        //     icon: Icon(Icons.add_box), label: 'New Request'),
         BottomNavigationBarItem(
             icon: Icon(Icons.history), label: 'History'),
         BottomNavigationBarItem(

@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../../../services/api_service.dart';
-
 
 class RequestPickupScreen extends StatefulWidget {
   const RequestPickupScreen({super.key});
@@ -15,7 +13,6 @@ class _RequestPickupScreenState extends State<RequestPickupScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _locationController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  final FlutterSecureStorage _storage = const FlutterSecureStorage();
   DateTime? _selectedDate;
   bool _isSubmitting = false;
 
@@ -27,52 +24,70 @@ class _RequestPickupScreenState extends State<RequestPickupScreen> {
       firstDate: now,
       lastDate: now.add(const Duration(days: 30)),
     );
-    if (picked != null) setState(() => _selectedDate = picked);
+    if (picked != null) {
+      setState(() => _selectedDate = picked);
+    }
   }
 
   void _submitForm() async {
     if (_formKey.currentState!.validate() && _selectedDate != null) {
       setState(() => _isSubmitting = true);
 
-      final token = await _storage.read(key: "token");
-      if (token == null) {
+      try {
+        final success = await ApiService.submitPickupRequest(
+          location: _locationController.text.trim(),
+          description: _descriptionController.text.trim(),
+          // Ensure your backend accepts this format. If not, use DateFormat("yyyy-MM-dd").format(_selectedDate!)
+          // If pickupDate in ApiService.submitPickupRequest expects 'yyyy-MM-dd', change this line:
+          // pickupDate: DateFormat("yyyy-MM-dd").format(_selectedDate!),
+          pickupDate: _selectedDate!.toIso8601String(),
+        );
+
+        if (context.mounted) {
+          if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Pickup request submitted successfully!')),
+            );
+            // Optionally clear fields - if you stay on screen, clear them.
+            // If you pop, clearing might not be necessary as the screen is gone.
+            _formKey.currentState?.reset();
+            _locationController.clear();
+            _descriptionController.clear();
+            setState(() => _selectedDate = null);
+
+            // --- IMPORTANT: Pop the screen and send a success result ---
+            print("RequestPickupScreen: Request submitted, popping back with true.");
+            Navigator.pop(context, true); // Pop with true to indicate success
+
+          } else {
+            // This 'else' will only be hit if ApiService returns false without throwing an exception.
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('Submission failed. Please try again.')),
+            );
+            // You might choose to pop with 'false' here, or keep the user on the screen.
+            // Navigator.pop(context, false);
+          }
+        }
+      } catch (e) {
+        print("RequestPickupScreen: Submit pickup request error: $e"); // Added screen name to log
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Login required')),
+            SnackBar(content: Text('Submission failed due to an error: ${e.toString()}')),
           );
+          // You might choose to pop with 'false' here, or keep the user on the screen.
+          // Navigator.pop(context, false);
         }
-        setState(() => _isSubmitting = false);
-        return;
-      }
-
-      final success = await ApiService.submitPickupRequest(
-        token: token,
-        location: _locationController.text.trim(),
-        description: _descriptionController.text.trim(),
-        pickupDate: _selectedDate!.toIso8601String(),
-      );
-
-      if (context.mounted) {
-        if (success) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Pickup request submitted!')),
-          );
-          _formKey.currentState?.reset();
-          _locationController.clear();
-          _descriptionController.clear();
-          setState(() => _selectedDate = null);
-        } else {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Submission failed. Try again.')),
-          );
+      } finally {
+        if (context.mounted) {
+          setState(() => _isSubmitting = false);
         }
       }
-
-      setState(() => _isSubmitting = false);
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please complete all fields')),
-      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please complete all fields (location, description, and date)')),
+        );
+      }
     }
   }
 

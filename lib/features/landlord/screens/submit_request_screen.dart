@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../../../services/api_service.dart';
 import 'package:intl/intl.dart';
+import '../../../services/api_service.dart';
 
-class SubmitRequestScreen extends StatefulWidget {
+class SubmitRequestScreen extends StatefulWidget { // Assuming this is the correct class name
   const SubmitRequestScreen({Key? key}) : super(key: key);
 
   @override
@@ -11,7 +10,6 @@ class SubmitRequestScreen extends StatefulWidget {
 }
 
 class _SubmitRequestScreenState extends State<SubmitRequestScreen> {
-  final _storage = const FlutterSecureStorage();
   final _formKey = GlobalKey<FormState>();
   final _locationController = TextEditingController();
   final _descController = TextEditingController();
@@ -21,81 +19,109 @@ class _SubmitRequestScreenState extends State<SubmitRequestScreen> {
   Future<void> _submitRequest() async {
     if (_formKey.currentState!.validate() && _selectedDate != null) {
       setState(() => _loading = true);
-      final token = await _storage.read(key: "token");
 
-      final success = await ApiService.submitPickupRequest(
-        token: token!,
-        location: _locationController.text.trim(),
-        description: _descController.text.trim(),
-        pickupDate: DateFormat("yyyy-MM-dd").format(_selectedDate!),
-      );
+      try {
+        final success = await ApiService.submitPickupRequest(
+          location: _locationController.text.trim(),
+          description: _descController.text.trim(),
+          pickupDate: DateFormat("yyyy-MM-dd").format(_selectedDate!),
+        );
 
-      setState(() => _loading = false);
-      if (success) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Pickup request submitted successfully."),
-        ));
-        _locationController.clear();
-        _descController.clear();
-        _selectedDate = null;
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text("Failed to submit request."),
-        ));
+        print("SubmitRequestScreen: ApiService.submitPickupRequest returned: $success");
+
+        if (context.mounted) {
+          if (success) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text("Pickup request submitted successfully."),
+            ));
+            _locationController.clear();
+            _descController.clear();
+            setState(() => _selectedDate = null);
+
+            // --- IMPORTANT: POP THE SCREEN OFF THE NAVIGATION STACK ---
+            // Pass 'true' as a result to indicate success to the previous screen (LandlordHomeScreen)
+            Navigator.pop(context, true); // This will return to LandlordHomeScreen
+
+          } else {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+              content: Text("Failed to submit request: API service returned false."),
+            ));
+            // If API returns false, you might choose to pop with false, or stay on screen
+            // Navigator.pop(context, false); // Example: Pop with 'false' on non-successful API response
+          }
+        }
+      } catch (e) {
+        print("Submit request error caught in SubmitRequestScreen: $e");
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text("Failed to submit request: ${e.toString()}")),
+          );
+          // If an error occurred, you might choose to pop with false, or stay on screen
+          // Navigator.pop(context, false); // Example: Pop with 'false' on error
+        }
+      } finally {
+        setState(() => _loading = false);
+      }
+    } else {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please complete all fields (location, description, and date)')),
+        );
       }
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    // No changes here from your snippet
     return Scaffold(
-      appBar: AppBar(title: Text("Submit Pickup Request")),
+      appBar: AppBar(title: const Text("Submit Pickup Request")),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: _loading
-            ? Center(child: CircularProgressIndicator())
+            ? const Center(child: CircularProgressIndicator())
             : Form(
           key: _formKey,
           child: ListView(
             children: [
               TextFormField(
                 controller: _locationController,
-                decoration: InputDecoration(labelText: "Pickup Location"),
+                decoration: const InputDecoration(labelText: "Pickup Location"),
                 validator: (value) =>
                 value!.isEmpty ? "Enter location" : null,
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               TextFormField(
                 controller: _descController,
                 decoration:
-                InputDecoration(labelText: "Short Description"),
+                const InputDecoration(labelText: "Short Description"),
                 maxLines: 3,
                 validator: (value) =>
                 value!.isEmpty ? "Enter description" : null,
               ),
-              SizedBox(height: 12),
+              const SizedBox(height: 12),
               ListTile(
                 contentPadding: EdgeInsets.zero,
                 title: Text(_selectedDate == null
                     ? "Select Pickup Date"
                     : DateFormat("yyyy-MM-dd").format(_selectedDate!)),
-                trailing: Icon(Icons.calendar_today),
+                trailing: const Icon(Icons.calendar_today),
                 onTap: () async {
                   final picked = await showDatePicker(
                     context: context,
-                    initialDate: DateTime.now().add(Duration(days: 1)),
+                    initialDate: DateTime.now().add(const Duration(days: 1)),
                     firstDate: DateTime.now(),
-                    lastDate: DateTime.now().add(Duration(days: 30)),
+                    lastDate: DateTime.now().add(const Duration(days: 30)),
                   );
                   if (picked != null) {
                     setState(() => _selectedDate = picked);
                   }
                 },
               ),
-              SizedBox(height: 24),
+              const SizedBox(height: 24),
               ElevatedButton.icon(
-                icon: Icon(Icons.send),
-                label: Text("Submit Request"),
+                icon: const Icon(Icons.send),
+                label: const Text("Submit Request"),
                 onPressed: _submitRequest,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.green[600],
